@@ -11,9 +11,11 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 };
 
 (function () {
-    const TextureRepeatMode = {
-        ForWall: 0,
-        ForRoof: 1
+    const BoxType = {
+        VerticalBox: 0,
+        HorizontalBox: 1,
+        VerticalPlane: 2,
+        HorizontalPlane: 3,
     };
 
     const behaviorProto = cr.behaviors.SimpleThree_Wall.prototype;
@@ -47,7 +49,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.elevation = 0;
         this.rotationX = 0;
         this.rotationZ = 0;
-        this.textureRepeat = TextureRepeatMode.ForWall;
+        this.boxType = BoxType.VerticalBox;
     };
 
     const behinstProto = behaviorProto.Instance.prototype;
@@ -65,45 +67,25 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         return 1;
     }
 
-    function GeometrySpec(width, verticalHeight, depth) {
+    function GeometrySpec(width, verticalHeight, depth, boxType) {
         this.width = width;
         this.verticalHeight = verticalHeight;
         this.depth = depth;
-
-        const byWidth = this.width === 0;
-        const byDepth = this.depth === 0;
-        const byVerticalHeight = this.verticalHeight === 0;
-
-        this.planeSpec = {
-            byWidth,
-            byDepth,
-            byVerticalHeight,
-
-            isPlane: (byWidth || byDepth || byVerticalHeight),
-            isLine: [byWidth, byDepth, byVerticalHeight].filter(x => x).length > 1,
-        }
+        this.boxType = boxType;
     }
 
     function createGeometry(geometrySpec) {
-        const planeSpec = geometrySpec.planeSpec;
-        const {width, verticalHeight, depth} = geometrySpec;
+        const {width, verticalHeight, depth, boxType} = geometrySpec;
 
-        if (!planeSpec.isPlane) {
-            return new THREE.BoxGeometry(width, verticalHeight, depth);
-        }
-
-        if (planeSpec.byWidth) {
-            return new THREE.PlaneGeometry(depth, verticalHeight)
-                .rotateY(cr.to_radians(-90));
-        }
-
-        if (planeSpec.byDepth) {
-            return new THREE.PlaneGeometry(width, verticalHeight);
-        }
-
-        if (planeSpec.byVerticalHeight) {
-            return new THREE.PlaneGeometry(width, depth)
-                .rotateX(cr.to_radians(-90));
+        switch (boxType) {
+            case BoxType.VerticalBox:
+            case BoxType.HorizontalBox:
+                return new THREE.BoxGeometry(width, verticalHeight, depth);
+            case BoxType.VerticalPlane:
+                return new THREE.PlaneGeometry(width, verticalHeight);
+            case BoxType.HorizontalPlane:
+                return new THREE.PlaneGeometry(width, depth)
+                    .rotateX(cr.to_radians(-90));
         }
     }
 
@@ -113,7 +95,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.elevation = this.properties[2];
         this.rotationX = cr.to_radians(this.properties[3]);
         this.rotationZ = cr.to_radians(this.properties[4]);
-        this.textureRepeat = this.properties[5];
+        this.boxType = this.properties[5];
 
         const simpleThreeInstances = Object.values(this.runtime.objectsByUid)
             .filter(instance => instance.plugin instanceof cr.plugins_.SimpleThree);
@@ -130,12 +112,8 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         const width3D = pixelsTo3DUnits(this.inst.width);
         const verticalHeight3D = pixelsTo3DUnits(this.verticalHeight);
         const depth3D = pixelsTo3DUnits(this.inst.height);
-        const geometrySpec = new GeometrySpec(width3D, verticalHeight3D, depth3D);
 
-        if (geometrySpec.planeSpec.isLine) {
-            console.warn("This object has more than one dimension set to 0, it won't be processed.");
-            return;
-        }
+        const geometrySpec = new GeometrySpec(width3D, verticalHeight3D, depth3D, this.boxType);
 
         const geometry = createGeometry(geometrySpec);
 
@@ -145,6 +123,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
         let box2DX = this.inst.x;
         let box2DY = this.inst.y;
+
         let box2DElevation = this.elevation + (this.verticalHotspot - 0.5) * this.verticalHeight;
 
         if (this.inst.hasOwnProperty('hotspotX')) {
@@ -168,9 +147,14 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
         texture.repeat.set(repeatVertical, repeatHorizontal);
 
+        const isBox = this.boxType === BoxType.VerticalBox || this.boxType === BoxType.HorizontalBox;
+        const side = isBox ? THREE.FrontSide : THREE.DoubleSide;
+
         const material = new THREE.MeshStandardMaterial({
             map: texture,
-            side: THREE.DoubleSide,
+            side: side,
+            transparent: !isBox,
+            alphaTest: isBox ? 0 : 0.5,
         });
 
         const box = new THREE.Mesh(geometry, material);
@@ -179,7 +163,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
     };
 
     behinstProto.calculateRepeats = function () {
-        if (this.textureRepeat === TextureRepeatMode.ForWall) {
+        if (this.boxType === BoxType.VerticalBox || this.boxType === BoxType.VerticalPlane) {
             return [
                 this.inst.width / this.inst.type.texture_img.width,
                 this.verticalHeight / this.inst.type.texture_img.height

@@ -22,7 +22,7 @@ var property_list = [
 	new cr.Property(ept_integer, "Elevation", 0, "How height is this wall elevated from ground in 2D pixels."),
 	new cr.Property(ept_float, "Rotation X", 0, "Rotation on the X axis in degrees."),
 	new cr.Property(ept_float, "Rotation Z", 0, "Rotation on the Z axis in degrees."),
-	new cr.Property(ept_combo, "Texture repeat", "For Wall", "Make the texture repeat for wall or for roof/floor.", "For Wall|For Floor"),
+	new cr.Property(ept_combo, "Type", "Vertical Box", "The type of this wall: Vertical Box, Horizontal Box(Same as horizontal, but texture is repeated based on the width and height, instead of width and vertical height), Vertical Plane (Width is ignored), Horizontal Plane (Vertical Height is ignored)", "Vertical Box|Horizontal Box|Vertical Plane|Horizontal Plane"),
 ];
 	
 // Called by IDE when a new behavior type is to be created

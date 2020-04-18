@@ -139,40 +139,68 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
             pixelsTo3DUnits(box2DY)
         );
 
-        const texture = new THREE.TextureLoader().load(this.inst.type.texture_file);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-
-        const [repeatVertical, repeatHorizontal] = this.calculateRepeats();
-
-        texture.repeat.set(repeatVertical, repeatHorizontal);
-
         const isBox = this.boxType === BoxType.VerticalBox || this.boxType === BoxType.HorizontalBox;
-        const side = isBox ? THREE.FrontSide : THREE.DoubleSide;
+        const textureFile = this.inst.type.texture_file;
 
-        const material = new THREE.MeshStandardMaterial({
-            map: texture,
-            side: side,
-            transparent: !isBox,
-            alphaTest: isBox ? 0 : 0.5,
-        });
+        let material = undefined;
+
+        const frontBack = createMaterial({textureFile, repeats: this.frontBackRepeats(), isBox});
+        const topBottom = createMaterial({textureFile, repeats: this.topBottomRepeats(), isBox});
+        const leftRight = createMaterial({textureFile, repeats: this.leftRightRepeats(), isBox});
+
+        if (isBox) {
+            material = [
+                leftRight,
+                leftRight,
+                topBottom,
+                topBottom,
+                frontBack,
+                frontBack,
+            ];
+        }else {
+            material = this.boxType === BoxType.VerticalPlane ? frontBack : topBottom;
+        }
 
         const box = new THREE.Mesh(geometry, material);
 
         this.simpleThree.scene.add(box);
     };
 
-    behinstProto.calculateRepeats = function () {
-        if (this.boxType === BoxType.VerticalBox || this.boxType === BoxType.VerticalPlane) {
-            return [
-                this.inst.width / this.inst.type.texture_img.width,
-                this.verticalHeight / this.inst.type.texture_img.height
-            ];
-        }
+    function createMaterial({textureFile, repeats, isBox}) {
+        const [repeatVertical, repeatHorizontal] = repeats;
+        const texture = new THREE.TextureLoader().load(textureFile);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
 
+        texture.repeat.set(repeatVertical, repeatHorizontal);
+        const side = isBox ? THREE.FrontSide : THREE.DoubleSide;
+
+        return new THREE.MeshStandardMaterial({
+            map: texture,
+            side: side,
+            transparent: !isBox,
+            alphaTest: isBox ? 0 : 0.5,
+        });
+    }
+
+    behinstProto.frontBackRepeats = function() {
+        return [
+            this.inst.width / this.inst.type.texture_img.width,
+            this.verticalHeight / this.inst.type.texture_img.height
+        ];
+    };
+
+    behinstProto.topBottomRepeats = function() {
         return [
             this.inst.width / this.inst.type.texture_img.width,
             this.inst.height / this.inst.type.texture_img.height
+        ];
+    };
+
+    behinstProto.leftRightRepeats = function() {
+        return [
+            this.inst.height / this.inst.type.texture_img.width,
+            this.verticalHeight / this.inst.type.texture_img.height
         ];
     };
 

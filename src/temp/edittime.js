@@ -13,10 +13,6 @@
 	};
 };
 
-if (typeof module !== 'undefined') {
-	module.exports = { settings: GetBehaviorSettings(), type: 'Behavior'};
-}
-
 ////////////////////////////////////////
 ACESDone();
 

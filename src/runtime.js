@@ -18,6 +18,12 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         HorizontalPlane: 3,
     };
 
+    const VerticalHotSpot = {
+        Top: 0,
+        Center: 1,
+        Bottom: 2
+    };
+
     const behaviorProto = cr.behaviors.SimpleThree_Wall.prototype;
 
     /////////////////////////////////////
@@ -56,11 +62,11 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
     function toVerticalHotspot(hotspotEnum) {
         switch (hotspotEnum) {
-            case 0:
+            case VerticalHotSpot.Top:
                 return 0;
-            case 1:
+            case VerticalHotSpot.Center:
                 return 0.5;
-            case 2:
+            case VerticalHotSpot.Bottom:
                 return 1;
         }
 
@@ -89,6 +95,17 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         }
     }
 
+    behinstProto.findSimpleThreeInstance = function () {
+        const simpleThreeInstances = Object.values(this.runtime.objectsByUid)
+            .filter(instance => instance.plugin instanceof cr.plugins_.SimpleThree);
+
+        if (simpleThreeInstances.length === 0) {
+            return undefined;
+        }
+
+        return simpleThreeInstances[0];
+    };
+
     behinstProto.onCreate = function () {
         this.verticalHeight = this.properties[0];
         this.verticalHotspot = toVerticalHotspot(this.properties[1]);
@@ -97,16 +114,15 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.rotationZ = cr.to_radians(this.properties[4]);
         this.boxType = this.properties[5];
 
-        const simpleThreeInstances = Object.values(this.runtime.objectsByUid)
-            .filter(instance => instance.plugin instanceof cr.plugins_.SimpleThree);
+        this.simpleThree = this.findSimpleThreeInstance();
 
-        if (simpleThreeInstances.length === 0) {
+        if (this.simpleThree === undefined) {
             console.warn('No simpleThree Object found');
             return;
         }
 
-        this.simpleThree = simpleThreeInstances[0];
         console.log(this);
+
         const pixelsTo3DUnits = this.simpleThree.pixelsTo3DUnits.bind(this.simpleThree);
 
         const width3D = pixelsTo3DUnits(this.inst.width);
@@ -117,36 +133,29 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
         const geometry = createGeometry(geometrySpec);
 
-        geometry.rotateY(-this.inst.angle);
-        geometry.rotateX(-this.rotationX);
-        geometry.rotateZ(-this.rotationZ);
-
-        let box2DX = this.inst.x;
-        let box2DY = this.inst.y;
-
-        let box2DElevation = this.elevation + (this.verticalHotspot - 0.5) * this.verticalHeight;
-
-        if (this.inst.hasOwnProperty('hotspotX')) {
-            box2DX = box2DX + (0.5 - this.inst.hotspotX) * this.inst.width;
-        }
-        if (this.inst.hasOwnProperty('hotspotY')) {
-            box2DY = box2DY + (0.5 - this.inst.hotspotY) * this.inst.height;
-        }
-
-        geometry.translate(
-            pixelsTo3DUnits(box2DX),
-            pixelsTo3DUnits(box2DElevation),
-            pixelsTo3DUnits(box2DY)
-        );
-
         const isBox = this.boxType === BoxType.VerticalBox || this.boxType === BoxType.HorizontalBox;
         const textureFile = this.inst.type.texture_file;
 
         let material = undefined;
 
-        const frontBack = createMaterial({textureFile, repeats: this.frontBackRepeats(), isBox, opacity: this.inst.opacity});
-        const topBottom = createMaterial({textureFile, repeats: this.topBottomRepeats(), isBox, opacity: this.inst.opacity});
-        const leftRight = createMaterial({textureFile, repeats: this.leftRightRepeats(), isBox, opacity: this.inst.opacity});
+        const frontBack = createMaterial({
+            textureFile,
+            repeats: this.frontBackRepeats(),
+            isBox,
+            opacity: this.inst.opacity
+        });
+        const topBottom = createMaterial({
+            textureFile,
+            repeats: this.topBottomRepeats(),
+            isBox,
+            opacity: this.inst.opacity
+        });
+        const leftRight = createMaterial({
+            textureFile,
+            repeats: this.leftRightRepeats(),
+            isBox,
+            opacity: this.inst.opacity
+        });
 
         if (isBox) {
             material = [
@@ -157,13 +166,33 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
                 frontBack,
                 frontBack,
             ];
-        }else {
+        } else {
             material = this.boxType === BoxType.VerticalPlane ? frontBack : topBottom;
         }
 
         const box = new THREE.Mesh(geometry, material);
+        const pivot = new THREE.Group();
 
-        this.simpleThree.scene.add(box);
+        box.position.y = pixelsTo3DUnits((this.verticalHotspot - 0.5) * this.verticalHeight);
+
+        if (this.inst.hasOwnProperty('hotspotX')) {
+            box.position.x = pixelsTo3DUnits((0.5 - this.inst.hotspotX) * this.inst.width);
+        }
+        if (this.inst.hasOwnProperty('hotspotY')) {
+            box.position.z = pixelsTo3DUnits((0.5 - this.inst.hotspotY) * this.inst.height);
+        }
+
+        pivot.add(box);
+        pivot.position.set(
+            pixelsTo3DUnits(this.inst.x),
+            pixelsTo3DUnits(this.elevation),
+            pixelsTo3DUnits(this.inst.y)
+        );
+        pivot.rotateY(-this.inst.angle);
+        pivot.rotateX(-this.rotationX);
+        pivot.rotateZ(-this.rotationZ);
+
+        this.simpleThree.scene.add(pivot);
     };
 
     function createMaterial({textureFile, repeats, isBox, opacity}) {
@@ -184,21 +213,21 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         });
     }
 
-    behinstProto.frontBackRepeats = function() {
+    behinstProto.frontBackRepeats = function () {
         return [
             this.inst.width / this.inst.type.texture_img.width,
             this.verticalHeight / this.inst.type.texture_img.height
         ];
     };
 
-    behinstProto.topBottomRepeats = function() {
+    behinstProto.topBottomRepeats = function () {
         return [
             this.inst.width / this.inst.type.texture_img.width,
             this.inst.height / this.inst.type.texture_img.height
         ];
     };
 
-    behinstProto.leftRightRepeats = function() {
+    behinstProto.leftRightRepeats = function () {
         return [
             this.inst.height / this.inst.type.texture_img.width,
             this.verticalHeight / this.inst.type.texture_img.height

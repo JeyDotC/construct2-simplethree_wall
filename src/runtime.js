@@ -137,24 +137,30 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         const textureFile = this.inst.type.texture_file;
 
         let material = undefined;
+        const onTextureLoad = () => {
+            this.simpleThree.runtime.redraw = true;
+        };
 
         const frontBack = createMaterial({
             textureFile,
             repeats: this.frontBackRepeats(),
             isBox,
-            opacity: this.inst.opacity
+            opacity: this.inst.opacity,
+            onLoad: onTextureLoad,
         });
         const topBottom = createMaterial({
             textureFile,
             repeats: this.topBottomRepeats(),
             isBox,
-            opacity: this.inst.opacity
+            opacity: this.inst.opacity,
+            onLoad: onTextureLoad,
         });
         const leftRight = createMaterial({
             textureFile,
             repeats: this.leftRightRepeats(),
             isBox,
-            opacity: this.inst.opacity
+            opacity: this.inst.opacity,
+            onLoad: onTextureLoad,
         });
 
         if (isBox) {
@@ -195,9 +201,9 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.simpleThree.scene.add(pivot);
     };
 
-    function createMaterial({textureFile, repeats, isBox, opacity}) {
+    function createMaterial({textureFile, repeats, isBox, opacity, onLoad}) {
         const [repeatVertical, repeatHorizontal] = repeats;
-        const texture = new THREE.TextureLoader().load(textureFile);
+        const texture = new THREE.TextureLoader().load(textureFile, onLoad);
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
 

@@ -16,7 +16,7 @@ limitations under the License.
 function GetBehaviorSettings()
 {
 	return {
-		"name":			"SimpleThree_Wall",			// as appears in 'add behavior' dialog, can be changed as long as "id" stays the same
+		"name":			"SimpleThree Wall",			// as appears in 'add behavior' dialog, can be changed as long as "id" stays the same
 		"id":			"SimpleThree_Wall",			// this is used to SimpleThree_Wall this behavior and is saved to the project; never change it
 		"version":		"1.0",					// (float in x.y format) Behavior version - C2 shows compatibility warnings based on this
 		"description":	"Converts a tiled background in a 3D box or a plane.",
@@ -45,6 +45,22 @@ AddAction(2, 0, "Set Wall X axis rotation", "Transform", "Wall X axis rotation t
 AddNumberParam("Rotation Z", "The wall's Z axis rotation in degrees.", 0);
 AddAction(3, 0, "Set Wall Z Axis Rotation", "Transform", "Wall Z axis rotation to <b>{0}</b> degrees", "Set the Wall's Z axis rotation in degrees.", "SetRotationZFrom2D");
 
+// Conditions
+AddCmpParam("Comparison", "");
+AddNumberParam("Value", "Value to compare Vertical Height with", "0");
+AddCondition(0, 0, "Compare Vertical Height", "Transform", "Vertical Height is {0} to <i>{1}</i>", "Compare the Wall's current Vertical Height.", "CompareVerticalHeight" );
+
+AddCmpParam("Comparison", "");
+AddNumberParam("Value", "Value to compare Elevation with", "0");
+AddCondition(1, 0, "Compare Elevation", "Transform", "Elevation is {0} to <i>{1}</i>", "Compare the Wall's current Elevation.", "CompareElevation" );
+
+AddCmpParam("Comparison", "");
+AddNumberParam("Angle (degrees)", "Angle to compare Rotation X with in degrees", "0");
+AddCondition(2, 0, "Compare Rotation X", "Transform", "Rotation X is {0} to <i>{1}</i>", "Compare the Wall's current Rotation X.", "CompareRotationX" );
+
+AddCmpParam("Comparison", "");
+AddNumberParam("Angle (degrees)", "Angle to compare Rotation Z with in degrees", "0");
+AddCondition(3, 0, "Compare Rotation Z", "Transform", "Rotation Z is {0} to <i>{1}</i>", "Compare the Wall's current Rotation Z.", "CompareRotationZ" );
 
 // Expressions
 AddExpression(0, ef_return_number, "Vertical Height", "Transform", "VerticalHeight", "The Wall Vertical Height in Pixels.");

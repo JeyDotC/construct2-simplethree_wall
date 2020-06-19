@@ -368,6 +368,21 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
     }
 
     // Conditions here ...
+    Cnds.prototype.CompareVerticalHeight = function (cmp, value) {
+        return cr.do_cmp(this.verticalHeight, cmp, value);
+    };
+
+    Cnds.prototype.CompareElevation = function (cmp, value) {
+        return cr.do_cmp(this.elevation, cmp, value);
+    };
+
+    Cnds.prototype.CompareRotationX = function (cmp, value) {
+        return cr.do_cmp(this.rotationX, cmp, cr.to_radians(value));
+    };
+
+    Cnds.prototype.CompareRotationZ = function (cmp, value) {
+        return cr.do_cmp(this.rotationZ, cmp, cr.to_radians(value));
+    };
 
     behaviorProto.cnds = new Cnds();
 

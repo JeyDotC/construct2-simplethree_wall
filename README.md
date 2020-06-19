@@ -1,4 +1,4 @@
-# SimpleThree_Wall
+# SimpleThree Wall
 **Type:** Behavior
 
 Converts a tiled background in a 3D box or a plane.
@@ -26,12 +26,22 @@ Converts a tiled background in a 3D box or a plane.
 |**Set Wall X axis rotation**| Set the Wall's X axis rotation in degrees. | - **Rotation X** _number_: The wall's X axis rotation in degrees.  |
 |**Set Wall Z Axis Rotation**| Set the Wall's Z axis rotation in degrees. | - **Rotation Z** _number_: The wall's Z axis rotation in degrees.  |
 
+## Conditions
+
+| Name | Description | Parameters |
+|------|-------------|------------|
+| |**Transform**| |
+|**Compare Vertical Height**| Compare the Wall's current Vertical Height. | - **Comparison** _comparison_:  <br />- **Value** _number_ = `0`: Value to compare Vertical Height with  |
+|**Compare Elevation**| Compare the Wall's current Elevation. | - **Comparison** _comparison_:  <br />- **Value** _number_ = `0`: Value to compare Elevation with  |
+|**Compare Rotation X**| Compare the Wall's current Rotation X. | - **Comparison** _comparison_:  <br />- **Angle (degrees)** _number_ = `0`: Angle to compare Rotation X with in degrees  |
+|**Compare Rotation Z**| Compare the Wall's current Rotation Z. | - **Comparison** _comparison_:  <br />- **Angle (degrees)** _number_ = `0`: Angle to compare Rotation Z with in degrees  |
+
 ## Expressions
 
 | Name | Type | Description | Parameters |
 |------|------|-------------|------------|
 | | |**Transform**| |
-|**Vertical Height**<br/><small>**Usage:** `MyObject.SimpleThree_Wall.VerticalHeight`</small>|`number`| The Wall Vertical Height in Pixels. |  |
-|**Elevation**<br/><small>**Usage:** `MyObject.SimpleThree_Wall.Elevation`</small>|`number`| The Wall Elevation in Pixels. |  |
-|**Rotation X**<br/><small>**Usage:** `MyObject.SimpleThree_Wall.RotationX`</small>|`number`| The Wall Rotation X in Degrees. |  |
-|**Rotation Z**<br/><small>**Usage:** `MyObject.SimpleThree_Wall.RotationZ`</small>|`number`| The Wall Rotation Z in Degrees. |  |
+|**Vertical Height**<br/><small>**Usage:** `MyObject.SimpleThree Wall.VerticalHeight`</small>|`number`| The Wall Vertical Height in Pixels. |  |
+|**Elevation**<br/><small>**Usage:** `MyObject.SimpleThree Wall.Elevation`</small>|`number`| The Wall Elevation in Pixels. |  |
+|**Rotation X**<br/><small>**Usage:** `MyObject.SimpleThree Wall.RotationX`</small>|`number`| The Wall Rotation X in Degrees. |  |
+|**Rotation Z**<br/><small>**Usage:** `MyObject.SimpleThree Wall.RotationZ`</small>|`number`| The Wall Rotation Z in Degrees. |  |

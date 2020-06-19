@@ -19,10 +19,10 @@ function GetBehaviorSettings()
 		"name":			"SimpleThree_Wall",			// as appears in 'add behavior' dialog, can be changed as long as "id" stays the same
 		"id":			"SimpleThree_Wall",			// this is used to SimpleThree_Wall this behavior and is saved to the project; never change it
 		"version":		"1.0",					// (float in x.y format) Behavior version - C2 shows compatibility warnings based on this
-		"description":	"Applies a Name and/or a series of tags to an object and pick those object by Name or Tag.",
+		"description":	"Converts a tiled background in a 3D box or a plane.",
 		"author":		"JeyDotC",
-		"help url":		"<your website or a manual entry on Scirra.com>",
-		"category":		"General",				// Prefer to re-use existing categories, but you can set anything here
+		"help url":		"https://github.com/JeyDotC/construct2-SimpleThree_Wall",
+		"category":		"Three Js",				// Prefer to re-use existing categories, but you can set anything here
 		"flags":		0						// uncomment lines to enable flags...
 					//	| bf_onlyone			// can only be added once to an object, e.g. solid
 	};
@@ -31,6 +31,26 @@ function GetBehaviorSettings()
 if (typeof module !== 'undefined') {
 	module.exports = { settings: GetBehaviorSettings(), type: 'Behavior'};
 }
+// Actions
+
+AddNumberParam("Vertical height", "The wall's vertical height in 2D Pixels.", 0);
+AddAction(0, 0, "Set Wall Vertical Height from 2D pixels", "Transform", "Wall height to <b>{0}</b>", "Set the Wall's vertical height from 2D pixel length.", "SetVerticalHeightFrom2D");
+
+AddNumberParam("Elevation", "The new wall's elevation in 2D Pixels.", 0);
+AddAction(1, 0, "Set Wall Elevation from 2D pixels", "Transform", "Wall Elevation to <b>{0}</b>", "Set the Wall's Elevation from 2D pixel length.", "SetElevationFrom2D");
+
+AddNumberParam("Rotation X", "The wall's X axis rotation in degrees.", 0);
+AddAction(2, 0, "Set Wall X axis rotation", "Transform", "Wall X axis rotation to <b>{0}</b> degrees", "Set the Wall's X axis rotation in degrees.", "SetRotationXFrom2D");
+
+AddNumberParam("Rotation Z", "The wall's Z axis rotation in degrees.", 0);
+AddAction(3, 0, "Set Wall Z Axis Rotation", "Transform", "Wall Z axis rotation to <b>{0}</b> degrees", "Set the Wall's Z axis rotation in degrees.", "SetRotationZFrom2D");
+
+
+// Expressions
+AddExpression(0, ef_return_number, "Vertical Height", "Transform", "VerticalHeight", "The Wall Vertical Height in Pixels.");
+AddExpression(1, ef_return_number, "Elevation", "Transform", "Elevation", "The Wall Elevation in Pixels.");
+AddExpression(2, ef_return_number, "Rotation X", "Transform", "RotationX", "The Wall Rotation X in Degrees.");
+AddExpression(3, ef_return_number, "Rotation Z", "Transform", "RotationZ", "The Wall Rotation Z in Degrees.");
 
 ////////////////////////////////////////
 ACESDone();
@@ -41,7 +61,7 @@ var property_list = [
 	new cr.Property(ept_integer, "Elevation", 0, "How height is this wall elevated from ground in 2D pixels."),
 	new cr.Property(ept_float, "Rotation X", 0, "Rotation on the X axis in degrees."),
 	new cr.Property(ept_float, "Rotation Z", 0, "Rotation on the Z axis in degrees."),
-	new cr.Property(ept_combo, "Type", "Vertical Box", "The type of this wall: Vertical Box, Horizontal Box(Same as horizontal, but texture is repeated based on the width and height, instead of width and vertical height), Vertical Plane (Width is ignored), Horizontal Plane (Vertical Height is ignored)", "Vertical Box|Horizontal Box|Vertical Plane|Horizontal Plane"),
+	new cr.Property(ept_combo, "Type", "Box", "The type of this wall: Box, Vertical Plane (Width is ignored on creation), Horizontal Plane (Vertical Height is ignored on creation)", "Box|Vertical Plane|Horizontal Plane"),
 ];
 	
 // Called by IDE when a new behavior type is to be created

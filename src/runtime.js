@@ -27,10 +27,9 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
 (function () {
     const BoxType = {
-        VerticalBox: 0,
-        HorizontalBox: 1,
-        VerticalPlane: 2,
-        HorizontalPlane: 3,
+        Box: 0,
+        VerticalPlane: 1,
+        HorizontalPlane: 2,
     };
 
     const VerticalHotSpot = {
@@ -99,8 +98,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         const {width, verticalHeight, depth, boxType} = geometrySpec;
 
         switch (boxType) {
-            case BoxType.VerticalBox:
-            case BoxType.HorizontalBox:
+            case BoxType.Box:
                 return new THREE.BoxGeometry(width, verticalHeight, depth);
             case BoxType.VerticalPlane:
                 return new THREE.PlaneGeometry(width, verticalHeight);
@@ -108,6 +106,25 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
                 return new THREE.PlaneGeometry(width, depth)
                     .rotateX(cr.to_radians(-90));
         }
+    }
+
+    function CubeStatus(behaviorInstance) {
+
+        this.update = function () {
+            this.width = behaviorInstance.inst.width;
+            this.verticalHeight = behaviorInstance.verticalHeight;
+            this.height = behaviorInstance.inst.height;
+        };
+
+        this.hasChanged = function () {
+            return (
+                this.width != behaviorInstance.inst.width ||
+                this.verticalHeight != behaviorInstance.verticalHeight ||
+                this.height != behaviorInstance.inst.height
+            );
+        };
+
+        this.update();
     }
 
     behinstProto.findSimpleThreeInstance = function () {
@@ -121,6 +138,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         return simpleThreeInstances[0];
     };
 
+
     behinstProto.onCreate = function () {
         this.verticalHeight = this.properties[0];
         this.verticalHotspot = toVerticalHotspot(this.properties[1]);
@@ -129,26 +147,28 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.rotationZ = cr.to_radians(this.properties[4]);
         this.boxType = this.properties[5];
 
+        this.cubeStatus = new CubeStatus(this);
+
+        this.pivot = new THREE.Group();
         this.simpleThree = this.findSimpleThreeInstance();
+        this.pixelsTo3DUnits = v => v;
 
         if (this.simpleThree === undefined) {
             console.warn('No simpleThree Object found');
             return;
         }
 
-        console.log(this);
+        this.pixelsTo3DUnits = this.simpleThree.pixelsTo3DUnits.bind(this.simpleThree);
 
-        const pixelsTo3DUnits = this.simpleThree.pixelsTo3DUnits.bind(this.simpleThree);
-
-        const width3D = pixelsTo3DUnits(this.inst.width);
-        const verticalHeight3D = pixelsTo3DUnits(this.verticalHeight);
-        const depth3D = pixelsTo3DUnits(this.inst.height);
+        const width3D = this.pixelsTo3DUnits(this.inst.width);
+        const verticalHeight3D = this.pixelsTo3DUnits(this.verticalHeight);
+        const depth3D = this.pixelsTo3DUnits(this.inst.height);
 
         const geometrySpec = new GeometrySpec(width3D, verticalHeight3D, depth3D, this.boxType);
 
         const geometry = createGeometry(geometrySpec);
 
-        const isBox = this.boxType === BoxType.VerticalBox || this.boxType === BoxType.HorizontalBox;
+        const isBox = this.boxType === BoxType.Box;
         const textureFile = this.inst.type.texture_file;
 
         let material = undefined;
@@ -191,29 +211,48 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
             material = this.boxType === BoxType.VerticalPlane ? frontBack : topBottom;
         }
 
-        const box = new THREE.Mesh(geometry, material);
-        const pivot = new THREE.Group();
+        this.box = new THREE.Mesh(geometry, material);
 
-        box.position.y = pixelsTo3DUnits((this.verticalHotspot - 0.5) * this.verticalHeight);
+        this.box.position.y = this.pixelsTo3DUnits((this.verticalHotspot - 0.5) * this.verticalHeight);
 
         if (this.inst.hasOwnProperty('hotspotX')) {
-            box.position.x = pixelsTo3DUnits((0.5 - this.inst.hotspotX) * this.inst.width);
+            this.box.position.x = this.pixelsTo3DUnits((0.5 - this.inst.hotspotX) * this.inst.width);
         }
         if (this.inst.hasOwnProperty('hotspotY')) {
-            box.position.z = pixelsTo3DUnits((0.5 - this.inst.hotspotY) * this.inst.height);
+            this.box.position.z = this.pixelsTo3DUnits((0.5 - this.inst.hotspotY) * this.inst.height);
         }
 
-        pivot.add(box);
-        pivot.position.set(
-            pixelsTo3DUnits(this.inst.x),
-            pixelsTo3DUnits(this.elevation),
-            pixelsTo3DUnits(this.inst.y)
-        );
-        pivot.rotateY(-this.inst.angle);
-        pivot.rotateX(-this.rotationX);
-        pivot.rotateZ(-this.rotationZ);
+        this.pivot.add(this.box);
+        this.pivot.rotation.order = 'YXZ';
+        this.updatePivot();
 
-        this.simpleThree.scene.add(pivot);
+        this.simpleThree.scene.add(this.pivot);
+    };
+
+    behinstProto.updatePivot = function () {
+        this.pivot.position.set(
+            this.pixelsTo3DUnits(this.inst.x),
+            this.pixelsTo3DUnits(this.elevation),
+            this.pixelsTo3DUnits(this.inst.y)
+        );
+        this.pivot.rotation.set(
+            -this.rotationX,
+            -this.inst.angle,
+            -this.rotationZ
+        );
+    };
+
+    behinstProto.updateGeometry = function () {
+        if (!this.box) {
+            return;
+        }
+        const width3D = this.pixelsTo3DUnits(this.inst.width);
+        const verticalHeight3D = this.pixelsTo3DUnits(this.verticalHeight);
+        const depth3D = this.pixelsTo3DUnits(this.inst.height);
+
+        const geometrySpec = new GeometrySpec(width3D, verticalHeight3D, depth3D, this.boxType);
+
+        this.box.geometry = createGeometry(geometrySpec);
     };
 
     function createMaterial({textureFile, repeats, isBox, opacity, onLoad}) {
@@ -280,9 +319,13 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
 
     behinstProto.tick = function () {
         const dt = this.runtime.getDt(this.inst);
-
         // called every tick for you to update this.inst as necessary
         // dt is the amount of time passed since the last tick, in case it's a movement
+        this.updatePivot();
+        if (this.cubeStatus.hasChanged()) {
+            this.cubeStatus.update();
+            this.updateGeometry();
+        }
     };
 
     // The comments around these functions ensure they are removed when exporting, since the
@@ -333,6 +376,22 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
     function Acts() {
     }
 
+    Acts.prototype.SetVerticalHeightFrom2D = function (verticalHeight) {
+        this.verticalHeight = verticalHeight;
+    };
+
+    Acts.prototype.SetElevationFrom2D = function (elevation) {
+        this.elevation = elevation;
+    };
+
+    Acts.prototype.SetRotationXFrom2D = function (angle) {
+        this.rotationX = cr.to_radians(angle);
+    };
+
+    Acts.prototype.SetRotationZFrom2D = function (angle) {
+        this.rotationZ = cr.to_radians(angle);
+    };
+
     // Actions here ...
 
     behaviorProto.acts = new Acts();
@@ -341,6 +400,22 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
     // Expressions
     function Exps() {
     }
+
+    Exps.prototype.VerticalHeight = function (ret) {
+        ret.set_float(this.verticalHeight);
+    };
+
+    Exps.prototype.Elevation = function (ret) {
+        ret.set_float(this.elevation);
+    };
+
+    Exps.prototype.RotationX = function (ret) {
+        ret.set_float(cr.to_degrees(this.rotationX));
+    };
+
+    Exps.prototype.RotationZ = function (ret) {
+        ret.set_float(cr.to_degrees(this.rotationZ));
+    };
 
     // Expressions here ...
 

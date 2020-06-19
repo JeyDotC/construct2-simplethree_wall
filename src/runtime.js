@@ -320,12 +320,11 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
     behinstProto.tick = function () {
         const dt = this.runtime.getDt(this.inst);
         // called every tick for you to update this.inst as necessary
-        // dt is the amount of time passed since the last tick, in case it's a movement
-        this.updatePivot();
         if (this.cubeStatus.hasChanged()) {
             this.cubeStatus.update();
             this.updateGeometry();
         }
+        this.updatePivot();
     };
 
     // The comments around these functions ensure they are removed when exporting, since the
@@ -339,27 +338,31 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         propsections.push({
             "title": this.type.name,
             "properties": [
-                // Each property entry can use the following values:
-                // "name" (required): name of the property (must be unique within this section)
-                // "value" (required): a boolean, number or string for the value
-                // "html" (optional, default false): set to true to interpret the name and value
-                //									 as HTML strings rather than simple plain text
-                // "readonly" (optional, default false): set to true to disable editing the property
+                {"name": "Vertical Height", "value": this.verticalHeight},
+                {"name": "Elevation", "value": this.elevation},
+                {"name": "Rotation X", "value": cr.to_degrees(this.rotationX)},
+                {"name": "Rotation Z", "value": cr.to_degrees(this.rotationZ)},
             ]
         });
     };
 
     behinstProto.onDebugValueEdited = function (header, name, value) {
-        // Called when a non-readonly property has been edited in the debugger. Usually you only
-        // will need 'name' (the property name) and 'value', but you can also use 'header' (the
-        // header title for the section) to distinguish properties with the same name.
-        if (name === "Name")
-            this.name = value;
-
-        if (name === "Tags")
-            this.tags = value.split(',');
+        const acts = this.behavior.acts;
+        switch (name) {
+            case "Vertical Height":
+                acts.SetVerticalHeightFrom2D.bind(this)(value);
+                break;
+            case "Elevation"      :
+                acts.SetElevationFrom2D.bind(this)(value);
+                break;
+            case "Rotation X"     :
+                acts.SetRotationXFrom2D.bind(this)(value);
+                break;
+            case "Rotation Z"     :
+                acts.SetRotationZFrom2D.bind(this)(value);
+                break;
+        }
     };
-
     /**END-PREVIEWONLY**/
 
     //////////////////////////////////////

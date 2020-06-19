@@ -305,16 +305,20 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         // return a Javascript object containing information about your behavior's state
         // note you MUST use double-quote syntax (e.g. "property": value) to prevent
         // Closure Compiler renaming and breaking the save format
-        return {};
+        return {
+            "vh": this.verticalHeight,
+            "e": this.elevation,
+            "rx": this.rotationX,
+            "rz": this.rotationZ,
+        };
     };
 
     // called when loading the full state of the game
     behinstProto.loadFromJSON = function (o) {
-        // load from the state previously saved by saveToJSON
-        // 'o' provides the same object that you saved, e.g.
-        // this.myValue = o["myValue"];
-        // note you MUST use double-quote syntax (e.g. o["property"]) to prevent
-        // Closure Compiler renaming and breaking the save format
+        this.verticalHeight = o["vh"];
+        this.elevation = o["e"];
+        this.rotationX = o["rx"];
+        this.rotationZ = o["rz"];
     };
 
     behinstProto.tick = function () {
@@ -363,6 +367,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
                 break;
         }
     };
+
     /**END-PREVIEWONLY**/
 
     //////////////////////////////////////

@@ -147,6 +147,10 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.rotationZ = cr.to_radians(this.properties[4]);
         this.boxType = this.properties[5];
 
+        if(this.boxType === BoxType.HorizontalPlane){
+            this.verticalHeight = 0;
+        }
+
         this.cubeStatus = new CubeStatus(this);
 
         this.pivot = new THREE.Group();
@@ -154,7 +158,7 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.pixelsTo3DUnits = v => v;
 
         if (this.simpleThree === undefined) {
-            console.warn('No simpleThree Object found');
+            console.warn('No simpleThree Object found. If it exists in this layout and you see this message, try moving the SimpleThree object to the bottom of the layer.');
             return;
         }
 

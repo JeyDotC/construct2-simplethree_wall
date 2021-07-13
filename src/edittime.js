@@ -18,7 +18,7 @@ function GetBehaviorSettings()
 	return {
 		"name":			"SimpleThree Wall",			// as appears in 'add behavior' dialog, can be changed as long as "id" stays the same
 		"id":			"SimpleThree_Wall",			// this is used to SimpleThree_Wall this behavior and is saved to the project; never change it
-		"version":		"1.0",					// (float in x.y format) Behavior version - C2 shows compatibility warnings based on this
+		"version":		"1.1",					// (float in x.y format) Behavior version - C2 shows compatibility warnings based on this
 		"description":	"Converts a tiled background in a 3D box or a plane.",
 		"author":		"JeyDotC",
 		"help url":		"https://github.com/JeyDotC/construct2-SimpleThree_Wall",
@@ -44,6 +44,15 @@ AddAction(2, 0, "Set Wall X axis rotation", "Transform", "Wall X axis rotation t
 
 AddNumberParam("Rotation Z", "The wall's Z axis rotation in degrees.", 0);
 AddAction(3, 0, "Set Wall Z Axis Rotation", "Transform", "Wall Z axis rotation to <b>{0}</b> degrees", "Set the Wall's Z axis rotation in degrees.", "SetRotationZFrom2D");
+
+AddComboParamOption('1');
+AddComboParamOption('2');
+AddComboParamOption('4');
+AddComboParamOption('8');
+AddComboParamOption('16');
+AddComboParamOption('Max');
+AddComboParam('Anisotropy', 'The new anisotropy value.', 0);
+AddAction(4, 0, "Set Wall texture anisotropy", "Advanced", "Wall texture anisotropy to <b>{0}</b>", "Sets the Wall's texture anisotropy.", "SetAnisotropy");
 
 // Conditions
 AddCmpParam("Comparison", "");
@@ -72,12 +81,18 @@ AddExpression(3, ef_return_number, "Rotation Z", "Transform", "RotationZ", "The 
 ACESDone();
 
 var property_list = [
-	new cr.Property(ept_integer, "Vertical height", 32, "The wall's vertical height in 2D pixels."),
-	new cr.Property(ept_combo, "Vertical hotspot", "Bottom", "Choose the location of the vertical hot spot in the object.", "Top|Center|Bottom"),
-	new cr.Property(ept_integer, "Elevation", 0, "How height is this wall elevated from ground in 2D pixels."),
-	new cr.Property(ept_float, "Rotation X", 0, "Rotation on the X axis in degrees."),
-	new cr.Property(ept_float, "Rotation Z", 0, "Rotation on the Z axis in degrees."),
-	new cr.Property(ept_combo, "Type", "Box", "The type of this wall: Box, Vertical Plane (Width is ignored on creation), Horizontal Plane (Vertical Height is ignored on creation)", "Box|Vertical Plane|Horizontal Plane"),
+	/* 0*/new cr.Property(ept_integer, "Vertical height", 32, "The wall's vertical height in 2D pixels."),
+	/* 1*/new cr.Property(ept_combo, "Vertical hotspot", "Bottom", "Choose the location of the vertical hot spot in the object.", "Top|Center|Bottom"),
+	/* 2*/new cr.Property(ept_integer, "Elevation", 0, "How height is this wall elevated from ground in 2D pixels."),
+	/* 3*/new cr.Property(ept_float, "Rotation X", 0, "Rotation on the X axis in degrees."),
+	/* 4*/new cr.Property(ept_float, "Rotation Z", 0, "Rotation on the Z axis in degrees."),
+	/* 5*/new cr.Property(ept_combo, "Type", "Box", "The type of this wall: Box, Vertical Plane (Width is ignored on creation), Horizontal Plane (Vertical Height is ignored on creation)", "Box|Vertical Plane|Horizontal Plane"),
+
+	/*--*/new cr.Property(ept_section, "Advanced"),
+	/* 6*/new cr.Property(ept_combo, "Anisotropy", "1", "The number of samples taken along the axis through the pixel that has the highest density of texels. Max will use renderer.getMaxAnisotropy method. The behavior will make sure the value is at most the maximum supported.", "1|2|4|8|16|Max"),
+	/* 7*/new cr.Property(ept_combo, "Enable 2D Render", "Disabled", "If whether or not this object's 2D render will happen, disabling it saves a lot of processing power.", "Disabled|Enabled"),
+	/* 8*/new cr.Property(ept_combo, "Magnification Filter", "Linear", "How the texture is sampled when a texel covers more than one pixel.", "Linear|Nearest"),
+	/* 9*/new cr.Property(ept_combo, "Minification Filter", "Linear Filter", "How the texture is sampled when a texel covers less than one pixel.", "Nearest Filter|Nearest Mipmap Nearest Filter|Nearest Mipmap Linear Filter|Linear Filter|Linear Mipmap Nearest Filter|Linear Mipmap Linear Filter"),
 ];
 	
 // Called by IDE when a new behavior type is to be created

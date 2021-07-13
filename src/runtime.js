@@ -87,6 +87,30 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         return 1;
     }
 
+    function toAnisotropyValue(anisotropy, maxAnisotropy){
+        switch (anisotropy){
+            case 0: return Math.min(1, maxAnisotropy);
+            case 1: return Math.min(2, maxAnisotropy);
+            case 2: return Math.min(4, maxAnisotropy);
+            case 3: return Math.min(8, maxAnisotropy);
+            case 4: return Math.min(16, maxAnisotropy);
+            case 5: return maxAnisotropy;
+        }
+        console.warn('Unknown value, returning default 1.');
+        return 1;
+    }
+
+    const toMinificationFilter = (filter) => {
+        switch (filter){
+            case 0: return THREE.NearestFilter;
+            case 1: return THREE.NearestMipmapNearestFilter;
+            case 2: return THREE.NearestMipmapLinearFilter;
+            case 3: return THREE.LinearFilter;
+            case 4: return THREE.LinearMipmapNearestFilter;
+            case 5: return THREE.LinearMipmapLinearFilter;
+        }
+    }
+
     function GeometrySpec(width, verticalHeight, depth, boxType) {
         this.width = width;
         this.verticalHeight = verticalHeight;
@@ -146,6 +170,13 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.rotationX = cr.to_radians(this.properties[3]);
         this.rotationZ = cr.to_radians(this.properties[4]);
         this.boxType = this.properties[5];
+        this.render2D = this.properties[7] === 1;
+        this.magnificationFilter = this.properties[8] === 0 ? THREE.LinearFilter : THREE.NearestFilter;
+        this.minificationFilter = toMinificationFilter(this.properties[9]);
+
+        if(!this.render2D){
+            this.inst.drawGL = this.inst.drawGL_earlyZPass = this.inst.draw = () => {};
+        }
 
         if(this.boxType === BoxType.HorizontalPlane){
             this.verticalHeight = 0;
@@ -161,6 +192,8 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
             console.warn('No simpleThree Object found. If it exists in this layout and you see this message, try moving the SimpleThree object to the bottom of the layer.');
             return;
         }
+
+        const anisotropy = this.anisotropy = toAnisotropyValue(this.properties[6], this.simpleThree.renderer.getMaxAnisotropy());
 
         this.pixelsTo3DUnits = this.simpleThree.pixelsTo3DUnits.bind(this.simpleThree);
 
@@ -180,26 +213,27 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
             this.simpleThree.runtime.redraw = true;
         };
 
-        const frontBack = createMaterial({
+        const textureSettings = {
             textureFile,
-            repeats: this.frontBackRepeats(),
             isBox,
             opacity: this.inst.opacity,
+            anisotropy,
             onLoad: onTextureLoad,
+            magnificationFilter: this.magnificationFilter,
+            minificationFilter: this.minificationFilter,
+        };
+
+        const frontBack = createMaterial({
+            ...textureSettings,
+            repeats: this.frontBackRepeats(),
         });
         const topBottom = createMaterial({
-            textureFile,
+            ...textureSettings,
             repeats: this.topBottomRepeats(),
-            isBox,
-            opacity: this.inst.opacity,
-            onLoad: onTextureLoad,
         });
         const leftRight = createMaterial({
-            textureFile,
+            ...textureSettings,
             repeats: this.leftRightRepeats(),
-            isBox,
-            opacity: this.inst.opacity,
-            onLoad: onTextureLoad,
         });
 
         if (isBox) {
@@ -259,11 +293,14 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         this.box.geometry = createGeometry(geometrySpec);
     };
 
-    function createMaterial({textureFile, repeats, isBox, opacity, onLoad}) {
+    function createMaterial({textureFile, repeats, isBox, opacity, anisotropy, onLoad, minificationFilter, magnificationFilter}) {
         const [repeatVertical, repeatHorizontal] = repeats;
         const texture = new THREE.TextureLoader().load(textureFile, onLoad);
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
+        texture.anisotropy = anisotropy;
+        texture.magFilter = magnificationFilter;
+        texture.minFilter = minificationFilter;
 
         texture.repeat.set(repeatVertical, repeatHorizontal);
         const side = isBox ? THREE.FrontSide : THREE.DoubleSide;

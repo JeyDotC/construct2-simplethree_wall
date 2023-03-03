@@ -339,7 +339,10 @@ cr.behaviors.SimpleThree_Wall = function (runtime) {
         // called when associated object is being destroyed
         // note runtime may keep the object and behavior alive after this call for recycling;
         // release, recycle or reset any references here as necessary
-       this.pivot.remove(this.box)
+       this.pivot.remove(this.box);
+       this.simpleThree?.scene?.remove(this.pivot);
+       this.pivot = undefined;
+       this.box = undefined;
     };
 
     // called when saving the full state of the game
